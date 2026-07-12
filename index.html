@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memory Game</title>
+    <style>
+      #board {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        position: relative;
+        z-index: 2;
+      }
+
+      #board.blocked {
+        pointer-events: none;
+      }
+      .card,
+      .selected,
+      .finished {
+        border: 1px solid black;
+        font-size: 64px;
+        text-align: center;
+        position: relative;
+      }
+
+      .finished {
+        background-color: lightgreen;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgb(255, 255, 255);
+      }
+    </style>
+  </head>
+  <body>
+    <h2 id="tries">Tries: 0</h2>
+    <h2 id="successes">Pairs found: 0</h2>
+    <div id="board"></div>
+  </body>
+  <script>
+    const board = document.getElementById("board");
+    const attempts = document.getElementById("tries");
+    const found = document.getElementById("successes");
+    const emojis = [
+      "😀",
+      "😂",
+      "🥰",
+      "😎",
+      "🤔",
+      "👍",
+      "🎉",
+      "🔥",
+      "🚀",
+      "🐱",
+      "🍕",
+      "🌍",
+    ];
+
+    const cards = [];
+    for (let i = 0; i < 12; i++) {
+      const emoji = emojis[i];
+      const card1 = document.createElement("button");
+      card1.classList.add("card");
+      card1.innerText = emoji;
+      const card2 = document.createElement("button");
+      card2.classList.add("card");
+      card2.innerText = emoji;
+
+      cards.push(card1);
+      cards.push(card2);
+    }
+
+    function shuffle(array) {
+      let currentIndex = array.length;
+
+      // While there remain elements to shuffle...
+      while (currentIndex != 0) {
+        // Pick a remaining element...
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+          array[randomIndex],
+          array[currentIndex],
+        ];
+      }
+
+      return array;
+    }
+
+    const mixedCards = shuffle(cards);
+
+    for (const card of cards) {
+      card.onclick = () => {
+        if (card.classList.contains("selected")) {
+          card.classList.add("card");
+          card.classList.remove("selected");
+          numSelected += -1;
+          return;
+        }
+
+        card.classList.add("selected");
+        card.classList.remove("card");
+        numSelected += 1;
+        if (numSelected < 2) return;
+
+        const selectedCards = Array.from(
+          document.getElementsByClassName("selected"),
+        );
+
+        numSelected = 0;
+        const [card1, card2] = Array.from(selectedCards);
+        if (card1.innerHTML === card2.innerHTML) {
+          successes += 1;
+          found.innerHTML = `Pairs found: ${successes}`;
+          card1.onclick = "";
+          card2.onclick = "";
+          card1.classList.add("finished");
+          card1.classList.remove("selected");
+          card2.classList.add("finished");
+          card2.classList.remove("selected");
+        } else {
+          tries += 1;
+          attempts.innerHTML = `Tries: ${tries}`;
+          board.classList.add("blocked");
+          setTimeout(() => {
+            for (const card of selectedCards) {
+              card.classList.add("card");
+              card.classList.remove("selected");
+            }
+            board.classList.remove("blocked");
+          }, 1000);
+        }
+      };
+      board.appendChild(card);
+    }
+
+    var numSelected = 0;
+    var tries = 0;
+    var successes = 0;
+  </script>
+</html>
