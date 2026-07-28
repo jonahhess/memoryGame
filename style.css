@@ -48,6 +48,25 @@ h1 {
   visibility: hidden;
 }
 
+#high-score.new-high-score {
+  animation: high-score-pop 600ms ease;
+}
+
+@keyframes high-score-pop {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  35% {
+    transform: scale(1.14);
+    color: #16a34a;
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
+}
+
 #board {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

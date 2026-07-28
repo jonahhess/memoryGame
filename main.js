@@ -1,3 +1,11 @@
+// Process:
+// I wrote the code myself, with global variables and direct dom manipulation
+// I refactored each action into a handleSomething function
+// I used an agent to refactor the code as a class
+
+// All the logic is my own, and the structure is mine. I avoided typing mistakes by delegating the 1:1 conversion to AI.
+// Except the shuffle algorithm. That was not me.
+
 (() => {
   class MemoryGame {
     #constants;
@@ -78,10 +86,18 @@
         ) {
           this.#state.highScore = potentialHighScore;
           this.#dom.score.innerHTML = `High Score: ${+this.#state.highScore.toFixed(2)} %`;
+          this.#playHighScoreAnimation();
         }
       } else {
         this.#dom.winText.style.visibility = "hidden";
       }
+    }
+
+    #playHighScoreAnimation() {
+      this.#dom.score.classList.remove("new-high-score");
+      // Force reflow so repeated wins can retrigger the animation class.
+      void this.#dom.score.offsetWidth;
+      this.#dom.score.classList.add("new-high-score");
     }
 
     #handleSelect(card) {
@@ -148,11 +164,11 @@
     }
 
     #initState() {
+      this.#dom.winText.style.visibility = "hidden";
       this.#dom.board.innerHTML = "";
       this.#state.selectedCards = [];
       this.#state.tries = 0;
       this.#state.successes = 0;
-      this.#state.highScore = 0;
 
       this.#renderScore();
 
