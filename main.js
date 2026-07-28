@@ -1,11 +1,3 @@
-// Process:
-// I wrote the code myself, with global variables and direct dom manipulation
-// I refactored each action into a handleSomething function
-// I used an agent to refactor the code as a class
-
-// All the logic is my own, and the structure is mine. I avoided typing mistakes by delegating the 1:1 conversion to AI.
-// Except the shuffle algorithm. That was not me.
-
 (() => {
   class MemoryGame {
     #constants;
