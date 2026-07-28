@@ -26,6 +26,31 @@
         border: 1px solid grey;
       }
 
+      #reset,
+      .card {
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease,
+          background-color 120ms ease;
+      }
+
+      #reset:hover,
+      .card:hover {
+        background-color: #f3f3f3;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+
+      #reset:active,
+      .card:active {
+        transform: translateY(1px) scale(0.98);
+      }
+
+      #reset:focus-visible,
+      .card:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+
       #win-text {
         visibility: hidden;
       }
@@ -57,6 +82,11 @@
         justify-content: center;
         align-items: center;
         position: relative;
+        user-select: none;
+      }
+
+      .card {
+        cursor: pointer;
       }
 
       .finished {
@@ -85,152 +115,178 @@
     <div id="board"></div>
   </body>
   <script>
-    // constants
-    const PAIRS = 12;
-    const MAX_POKEMON_ID = 1025;
-    const BASE_URL =
-      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/";
+    (() => {
+      class MemoryGame {
+        #constants;
+        #dom;
+        #state;
 
-    const ID_SET = new Set();
-    while (ID_SET.size < PAIRS) {
-      ID_SET.add(Math.floor(Math.random() * MAX_POKEMON_ID) + 1);
-    }
+        constructor() {
+          this.#constants = {
+            pairs: 12,
+            maxPokemonId: 1025,
+            baseUrl:
+              "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/",
+          };
 
-    const POKEMON_IDS = Array.from(ID_SET);
+          this.#dom = {
+            board: document.getElementById("board"),
+            attempts: document.getElementById("tries"),
+            found: document.getElementById("successes"),
+            score: document.getElementById("high-score"),
+            reset: document.getElementById("reset"),
+            winText: document.getElementById("win-text"),
+          };
 
-    // html elements
-    const board = document.getElementById("board");
-    const attempts = document.getElementById("tries");
-    const found = document.getElementById("successes");
-    const score = document.getElementById("high-score");
-    const reset = document.getElementById("reset");
-    const winText = document.getElementById("win-text");
+          this.#state = {
+            pokemonIds: this.#generatePokemonIds(),
+            selectedCards: [],
+            tries: 0,
+            successes: 0,
+            highScore: 0,
+          };
 
-    // variables
-    let numSelected = 0;
-    let tries = 0;
-    let successes = 0;
-    let highScore = 0;
+          this.#dom.reset.onclick = () => this.#initState();
+          this.#initState();
+        }
 
-    // helper to shuffle cards
-    function shuffleCards(array) {
-      return array
-        .map((item) => ({
-          item,
-          key: crypto.getRandomValues(new Uint32Array(1))[0],
-        }))
-        .sort((a, b) => a.key - b.key)
-        .map(({ item }) => item);
-    }
+        #generatePokemonIds() {
+          const idSet = new Set();
+          while (idSet.size < this.#constants.pairs) {
+            idSet.add(
+              Math.floor(Math.random() * this.#constants.maxPokemonId) + 1,
+            );
+          }
+          return Array.from(idSet);
+        }
 
-    function createCard(pokemon_id, emoji) {
-      const card = document.createElement("button");
-      card.classList.add("card");
-      if (pokemon_id) {
-        const img = document.createElement("img");
-        img.src = `${BASE_URL}/${pokemon_id}.png`;
-        card.appendChild(img);
-      } else {
-        card.innerText = emoji;
-      }
+        #shuffleCards(array) {
+          return array
+            .map((item) => ({
+              item,
+              key: crypto.getRandomValues(new Uint32Array(1))[0],
+            }))
+            .sort((a, b) => a.key - b.key)
+            .map(({ item }) => item);
+        }
 
-      return card;
-    }
+        #createCard(pokemonId) {
+          const card = document.createElement("button");
+          card.classList.add("card");
 
-    function renderScore() {
-      attempts.innerHTML = `Tries: ${tries}`;
-      found.innerHTML = `Pairs found: ${successes}`;
-      if (successes >= PAIRS) {
-        winText.style.visibility = "visible";
-        const potentialHighScore = (successes / tries) * 100;
-        highScore =
-          Number.isFinite(potentialHighScore) && potentialHighScore > highScore
-            ? potentialHighScore
-            : 0;
-        score.innerHTML = `High Score: ${+highScore.toFixed(2)} %`;
-      } else {
-        winText.style.visibility = "hidden";
-      }
-    }
+          const img = document.createElement("img");
+          img.src = `${this.#constants.baseUrl}/${pokemonId}.png`;
+          card.appendChild(img);
 
-    function handleSelect(selectedCards, card) {
-      if (!Array.isArray(selectedCards) || selectedCards.length > 2) {
-        initState();
-        return;
-      }
-      card.classList.add("selected");
-      card.classList.remove("card");
-      selectedCards.push(card);
-    }
+          return card;
+        }
 
-    function handleUnselect(card) {
-      card.classList.add("card");
-      card.classList.remove("selected");
-    }
+        #renderScore() {
+          this.#dom.attempts.innerHTML = `Tries: ${this.#state.tries}`;
+          this.#dom.found.innerHTML = `Pairs found: ${this.#state.successes}`;
 
-    function handleFind(card) {
-      card.onclick = "";
-      card.classList.add("finished");
-      card.classList.remove("selected");
-    }
+          if (this.#state.successes >= this.#constants.pairs) {
+            this.#dom.winText.style.visibility = "visible";
+            const potentialHighScore =
+              (this.#state.successes / this.#state.tries) * 100;
+            this.#state.highScore =
+              Number.isFinite(potentialHighScore) &&
+              potentialHighScore > this.#state.highScore
+                ? potentialHighScore
+                : this.#state.highScore;
+            this.#dom.score.innerHTML = `High Score: ${+this.#state.highScore.toFixed(2)} %`;
+          } else {
+            this.#dom.winText.style.visibility = "hidden";
+          }
+        }
 
-    function handleFoundPair(card1, card2) {
-      successes += 1;
-      handleFind(card1);
-      handleFind(card2);
-    }
-
-    function handlePairNotFound(card1, card2) {
-      board.classList.add("blocked");
-      setTimeout(() => {
-        handleUnselect(card1);
-        handleUnselect(card2);
-        board.classList.remove("blocked");
-      }, 1000);
-    }
-
-    function initState() {
-      board.innerHTML = "";
-      selectedCards = [];
-      tries = 0;
-      successes = 0;
-      highScore = 0;
-
-      renderScore();
-
-      const cards = [];
-      for (let i = 0; i < PAIRS; i++) {
-        const pokemon_id = POKEMON_IDS[i];
-        cards.push(createCard(pokemon_id));
-        cards.push(createCard(pokemon_id));
-      }
-
-      const mixedCards = shuffleCards(cards);
-
-      for (const card of mixedCards) {
-        card.onclick = () => {
-          if (card.classList.contains("selected")) {
+        #handleSelect(card) {
+          if (this.#state.selectedCards.length >= 2) {
             return;
           }
-          handleSelect(selectedCards, card);
-          if (selectedCards.length < 2) return;
-          tries += 1;
 
-          const [card1, card2] = selectedCards;
-          if (card1.innerHTML === card2.innerHTML) {
-            handleFoundPair(card1, card2);
-          } else {
-            handlePairNotFound(card1, card2);
+          card.classList.add("selected");
+          card.classList.remove("card");
+          this.#state.selectedCards.push(card);
+        }
+
+        #handleUnselect(card) {
+          card.classList.add("card");
+          card.classList.remove("selected");
+        }
+
+        #handleFind(card) {
+          card.onclick = null;
+          card.classList.add("finished");
+          card.classList.remove("selected");
+        }
+
+        #handleFoundPair(card1, card2) {
+          this.#state.successes += 1;
+          this.#handleFind(card1);
+          this.#handleFind(card2);
+        }
+
+        #handlePairNotFound(card1, card2) {
+          this.#dom.board.classList.add("blocked");
+          setTimeout(() => {
+            this.#handleUnselect(card1);
+            this.#handleUnselect(card2);
+            this.#dom.board.classList.remove("blocked");
+          }, 1000);
+        }
+
+        #onCardClick(card) {
+          if (
+            card.classList.contains("selected") ||
+            this.#dom.board.classList.contains("blocked")
+          ) {
+            return;
           }
-          selectedCards = [];
-          renderScore();
-        };
-        board.appendChild(card);
+
+          this.#handleSelect(card);
+          if (this.#state.selectedCards.length < 2) {
+            return;
+          }
+
+          this.#state.tries += 1;
+          const [card1, card2] = this.#state.selectedCards;
+
+          if (card1.innerHTML === card2.innerHTML) {
+            this.#handleFoundPair(card1, card2);
+          } else {
+            this.#handlePairNotFound(card1, card2);
+          }
+
+          this.#state.selectedCards = [];
+          this.#renderScore();
+        }
+
+        #initState() {
+          this.#dom.board.innerHTML = "";
+          this.#state.selectedCards = [];
+          this.#state.tries = 0;
+          this.#state.successes = 0;
+          this.#state.highScore = 0;
+
+          this.#renderScore();
+
+          const cards = [];
+          for (let i = 0; i < this.#constants.pairs; i++) {
+            const pokemonId = this.#state.pokemonIds[i];
+            cards.push(this.#createCard(pokemonId));
+            cards.push(this.#createCard(pokemonId));
+          }
+
+          const mixedCards = this.#shuffleCards(cards);
+          for (const card of mixedCards) {
+            card.onclick = () => this.#onCardClick(card);
+            this.#dom.board.appendChild(card);
+          }
+        }
       }
-    }
 
-    initState();
-
-    reset.onclick = initState;
+      new MemoryGame();
+    })();
   </script>
 </html>
