@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Memory Game</title>
+    <title>Pokemon Memory Game</title>
     <style>
       header {
         display: flex;
@@ -111,7 +111,7 @@
       <p id="high-score">High Score: 0%</p>
       <p id="win-text">You Win!</p>
     </header>
-    <h1>Memory Game</h1>
+    <h1>Pokemon Memory Game</h1>
     <div id="board"></div>
   </body>
   <script>
@@ -175,7 +175,7 @@
           card.classList.add("card");
 
           const img = document.createElement("img");
-          img.src = `${this.#constants.baseUrl}/${pokemonId}.png`;
+          img.src = `${this.#constants.baseUrl}${pokemonId}.png`;
           card.appendChild(img);
 
           return card;
@@ -187,14 +187,17 @@
 
           if (this.#state.successes >= this.#constants.pairs) {
             this.#dom.winText.style.visibility = "visible";
+
             const potentialHighScore =
               (this.#state.successes / this.#state.tries) * 100;
-            this.#state.highScore =
+
+            if (
               Number.isFinite(potentialHighScore) &&
               potentialHighScore > this.#state.highScore
-                ? potentialHighScore
-                : this.#state.highScore;
-            this.#dom.score.innerHTML = `High Score: ${+this.#state.highScore.toFixed(2)} %`;
+            ) {
+              this.#state.highScore = potentialHighScore;
+              this.#dom.score.innerHTML = `High Score: ${+this.#state.highScore.toFixed(2)} %`;
+            }
           } else {
             this.#dom.winText.style.visibility = "hidden";
           }
@@ -202,6 +205,7 @@
 
         #handleSelect(card) {
           if (this.#state.selectedCards.length >= 2) {
+            this.#initState();
             return;
           }
 
