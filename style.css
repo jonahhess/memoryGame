@@ -1,7 +1,15 @@
+body {
+  margin: 0;
+  padding: 12px;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: #111827;
+}
+
 header {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 

@@ -57,6 +57,7 @@
 
       const img = document.createElement("img");
       img.src = `${this.#constants.baseUrl}${pokemonId}.png`;
+      img.alt = "Pokemon card";
       card.appendChild(img);
 
       return card;
@@ -94,7 +95,6 @@
 
     #handleSelect(card) {
       if (this.#state.selectedCards.length >= 2) {
-        this.#initState();
         return;
       }
 
